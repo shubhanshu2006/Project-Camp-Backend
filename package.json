@@ -1,0 +1,15 @@
+{
+  "name": "project-management",
+  "version": "1.0.0",
+  "description": "First Backend Project",
+  "license": "ISC",
+  "author": "Shubhanshu Singh",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node index.js"
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}
