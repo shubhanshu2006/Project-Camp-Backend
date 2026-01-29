@@ -1,69 +1,32 @@
-#  Project Camp Backend (Authentication Module)
+# Project Camp Backend
 
-This backend is the authentication system for **Project Camp**, built using **Node.js, Express, MongoDB, JWT, and Nodemailer**.
-
-At the current stage, the backend includes **only the Authentication and Health Check modules**.  
-(Project, Tasks, Subtasks, Notes, RBAC, etc. will be added later.)
+A sophisticated, production-grade project management backend system built with a focus on security, scalability, and granular access control. Leveraging the power of **Node.js, Express, and MongoDB**, it provides a comprehensive API for collaborative team environments.
 
 ---
 
-##  Current Features (Implemented)
+## 🌟 Core Modules & Functionality
 
-###  **Authentication**
-- Register user  
-- Verify email  
-- Login  
-- Logout  
-- Get current user  
-- Forgot password  
-- Reset password  
-- Change password  
-- Resend verification email  
+### 1. 🔐 Superior Authentication System
+- **Email Verification Flow:** Uses secure tokens and `Nodemailer` with `Mailgen` templates to ensure user authenticity.
+- **Dual-Token Strategy:** Implementation of JWT-based Access Tokens (short-lived) and Refresh Tokens (long-lived) stored in secure, `httpOnly` cookies.
+- **Password Lifecycle:** Robust security using `bcrypt` for hashing, with complete flows for forgotten passwords, resets, and secure changes.
 
-###  Security Features
-- Password hashing using bcrypt  
-- JWT access token  
-- Token stored in secure cookies  
-- Email verification & password reset via mail  
-- Validation on all inputs  
-- Central error handling  
+### 2. 🏗️ Project Organization
+- **Isolation:** Projects act as secure containers. Members only have access to projects they are explicitly invited to.
+- **Member Roles:** Granular control within projects using three distinct roles: `Admin`, `Project Admin`, and `Member`.
 
-###  Email System
-- Nodemailer transport  
-- Mailgen email templates  
-- Verification email  
-- Password reset email  
+### 3. 📋 Advanced Task Management
+- **Hierarchical Tasks:** Tasks support nested **Subtasks**, allowing for detailed project breakdown.
+- **Resource Attachments:** Integrated file upload capability using `Multer`, allowing tasks to hold up to 5 attachments (images/docs).
+- **Interactive State:** Real-time-ready status tracking (`Todo` -> `In Progress` -> `Done`).
 
-###  System Health
-- `/api/v1/healthcheck` endpoint
-
-## Authentication Routes 
-
-###  Unsecured Routes
-| Method | Route | Description |
-|--------|--------|-------------|
-| POST | `/api/v1/auth/register` | Register a new user |
-| POST | `/api/v1/auth/login` | Login user |
-| GET | `/api/v1/auth/verify-email/:verificationToken` | Verify user email |
-| POST | `/api/v1/auth/refresh-token` | Refresh access token |
-| POST | `/api/v1/auth/forgot-password` | Send forgot password email |
-| POST | `/api/v1/auth/reset-password/:resetToken` | Reset forgotten password |
+### 4. 📓 Integrated Project Notes
+- **Centralized Knowledge:** A dedicated space for project-level documentation and quick notes.
+- **Admin Managed:** Ensuring high-quality project documentation through role-restricted creation and editing.
 
 ---
 
-###  Secured Routes
-| Method | Route | Description |
-|--------|--------|-------------|
-| POST | `/api/v1/auth/logout` | Logout user |
-| POST | `/api/v1/auth/current-user` | Get current authenticated user |
-| POST | `/api/v1/auth/change-password` | Change current user’s password |
-| POST | `/api/v1/auth/resend-email-verification` | Resend verification email |
-
-
-
----
-
-##  Folder Structure 
+## 📂 Folder Structure
 
 ```text
 Project-Camp-Backend/
@@ -77,21 +40,33 @@ Project-Camp-Backend/
 ├── src/
 │   ├── controllers/
 │   │   ├── auth.controllers.js
-│   │   └── healthcheck.controllers.js
+│   │   ├── healthcheck.controllers.js
+│   │   ├── note.controllers.js
+│   │   ├── project.controllers.js
+│   │   └── task.controllers.js
 │   │
 │   ├── db/
 │   │   └── index.js
 │   │
 │   ├── middlewares/
 │   │   ├── auth.middleware.js
+│   │   ├── multer.middleware.js
 │   │   └── validator.middleware.js
 │   │
 │   ├── models/
+│   │   ├── note.models.js
+│   │   ├── project.models.js
+│   │   ├── projectmember.models.js
+│   │   ├── subtask.models.js
+│   │   ├── task.models.js
 │   │   └── user.models.js
 │   │
 │   ├── routes/
 │   │   ├── auth.routes.js
-│   │   └── healthcheck.routes.js
+│   │   ├── healthcheck.routes.js
+│   │   ├── note.routes.js
+│   │   ├── project.routes.js
+│   │   └── task.routes.js
 │   │
 │   ├── utils/
 │   │   ├── api-error.js
@@ -113,41 +88,105 @@ Project-Camp-Backend/
 ├── package.json
 ├── package-lock.json
 └── README.md
-
 ```
 
 ---
 
-##  Installation & Setup
+## Detailed API Reference
 
-###  Clone the repository
-```bash
-git clone https://github.com/shubhanshu2006/Project-Camp-Backend.git
-cd project-camp-backend
- ```
-##  Install Dependencies
-```bash
-npm install
-```
-## Create .env File
-```bash
-PORT=5000
+### 🔑 Authentication Module (`/api/v1/auth`)
+| Method | Endpoint | Description | Interaction |
+|:-------|:---------|:------------|:------------|
+| `POST` | `/register` | Create a new account | Public |
+| `POST` | `/login` | Authenticate & get tokens | Public |
+| `GET` | `/verify-email/:vToken` | Activate account | Public |
+| `POST` | `/refresh-token` | Renew expired access token | Public |
+| `POST` | `/forgot-password` | Request reset link | Public |
+| `POST` | `/reset-password/:rToken`| Update forgotten password | Public |
+| `POST` | `/logout` | Invalidate current session | Secured |
+| `GET` | `/current-user` | Retrieve profile data | Secured |
+| `POST` | `/change-password` | Update known password | Secured |
 
-MONGODB_URL=your_mongodb_connection_string
+### 📁 Projects Module (`/api/v1/projects`)
+| Method | Endpoint | Description | Permission |
+|:-------|:---------|:------------|:-----------|
+| `GET` | `/` | List all accessible projects | Member+ |
+| `POST` | `/` | Initialize a new project | Admin |
+| `GET` | `/:projectId` | Fetch project workspace | Member+ |
+| `PUT` | `/:projectId` | Update project metadata | Admin |
+| `DELETE` | `/:projectId` | Remove project & assets | Admin |
+| `POST` | `/:projectId/members` | Invite new team member | Admin |
+| `DELETE`| `/:projectId/members/:uId`| Evict member from project | Admin |
 
-ACCESS_TOKEN_SECRET=your_access_token_secret
-ACCESS_TOKEN_EXPIRY=your_access_token_expiry
-REFRESH_TOKEN_SECRET=your_refresh_token_secret
-REFRESH_TOKEN_EXPIRY=your_refresh_token_expiry
+### 📝 Tasks Module (`/api/v1/tasks`)
+| Method | Endpoint | Description | Permission |
+|:-------|:---------|:------------|:-----------|
+| `GET` | `/:projectId` | Fetch project task board | Member+ |
+| `POST` | `/:projectId` | Create task with media | Admin/P.Admin|
+| `PUT` | `/:projectId/t/:tId` | Modify task/append media | Admin/P.Admin|
+| `POST` | `/:projectId/t/:tId/subtasks`| Define a new subtask | Admin/P.Admin|
+| `PUT` | `/:projectId/st/:stId`| Toggle subtask completion | Member+ |
 
-MAILTRAP_SMTP_HOST=smtp.example.com
-MAILTRAP_SMTP_PORT=587
-MAILTRAP_SMTP_USER=your_mailtrap_email
-MAILTRAP_SMTP_PASSWORD=your_mailtrap_email_password
+---
 
-FORGOT_PASSWORD_REDIRECT_URL=your_forgot-password_redirect_URL
-```
-## Start Development Server
-```bash
-npm run dev
-```
+## 🛡️ Security & Middleware Architecture
+
+- **`auth.middleware.js`**:
+    - `verifyJWT`: Validates the bearer token or cookie-based JWT.
+    - `validateProjectPermission`: A factory middleware that checks if a user has the required project-specific role (`Admin`, `Project Admin`, or `Member`) before allowing route access.
+- **`validator.middleware.js`**: Uses `express-validator` to intercept requests and ensure data integrity before reaching the business logic.
+- **`multer.middleware.js`**: Configures storage engine and file filters for secure image/document uploads to `public/images`.
+
+---
+
+## Role-Based Access Control (RBAC)
+
+| Action | Admin | Project Admin | Member |
+|:-------|:---:|:---:|:---:|
+| Project Management (CRUD) | ✅ | ❌ | ❌ |
+| Member Invitation/Role Assignment | ✅ | ❌ | ❌ |
+| Task/Subtask Creation & Deletion | ✅ | ✅ | ❌ |
+| Subtask Status Toggling | ✅ | ✅ | ✅ |
+| Project Notes Management | ✅ | ❌ | ❌ |
+| Content Viewing (Read-Only) | ✅ | ✅ | ✅ |
+
+---
+
+## 🛠 Installation & High-Speed Setup
+
+1. **Clone the Source**
+   ```bash
+   git clone https://github.com/shubhanshu2006/Project-Camp-Backend.git
+   cd project-camp-backend
+   ```
+
+2. **Dependency Injection**
+   ```bash
+   npm install
+   ```
+
+3. **Establish Environment**
+   Create a `.env` in the root:
+   ```env
+   PORT=your_port
+   SERVER_URL=your_url
+   MONGODB_URL=mongodb+srv://<user>:<password>@cluster.mongodb.net/projectcamp
+   
+   ACCESS_TOKEN_SECRET=highly_complex_string_1
+   ACCESS_TOKEN_EXPIRY=1d
+   REFRESH_TOKEN_SECRET=highly_complex_string_2
+   REFRESH_TOKEN_EXPIRY=10d
+   
+   MAILTRAP_SMTP_HOST=smtp.mailtrap.io
+   MAILTRAP_SMTP_PORT=2525
+   MAILTRAP_SMTP_USER=your_credential
+   MAILTRAP_SMTP_PASSWORD=your_credential
+   
+   FORGOT_PASSWORD_REDIRECT_URL=your_url
+   ```
+
+4. **Ignite Development**
+   ```bash
+   npm run dev
+   ```
+
